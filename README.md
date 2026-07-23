@@ -96,4 +96,3 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 
 - Mainly built on [MonoGame](https://www.monogame.net/) and [MonoGame.Samples](https://github.com/MonoGame/MonoGame.Samples)
 - Inspired by clean architecture and dependency injection patterns
-```
