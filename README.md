@@ -56,7 +56,7 @@ _adapter.Update(timeGame);
 _adapter.Draw(timeGame);
 ```
 
-For a full example, see the [DungeonSlime sample](Samples/DungeonSlime).
+For a full example, see the [Samples](https://github.com/mushroomcowisheggs/Extension-esque-MonoGameLibrary.Samples).
 
 ## Project Structure
 
