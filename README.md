@@ -96,3 +96,10 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 
 - Mainly built on [MonoGame](https://www.monogame.net/) and [MonoGame.Samples](https://github.com/MonoGame/MonoGame.Samples)
 - Inspired by clean architecture and dependency injection patterns
+
+## Third-Party Licenses
+
+This project uses the following open-source frameworks:
+
+- **MonoGame** (https://github.com/MonoGame/MonoGame) – Licensed under the MIT and Microsoft Public License (MS-PL).
+- **Gum UI** (https://github.com/vchelaru/Gum) – Licensed under the MIT License.
