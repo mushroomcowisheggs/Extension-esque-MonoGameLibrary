@@ -57,6 +57,11 @@ namespace MonoGameLibrary.Extensions.General.States {
             InputService = serviceInput;
         }
         
+        /// <summary>
+        /// Called once to load content. Override to load textures, sounds, etc.
+        /// </summary>
+        public virtual void LoadContent() { }
+        
         protected void RequestPush(State stateNew) {
             if (StateChangeRequested != null) {
                 StateChangeRequested(this, new StateChangeEventArgs(StateChangeType.Push, stateNew));
@@ -85,6 +90,8 @@ namespace MonoGameLibrary.Extensions.General.States {
         
         public abstract void Update(FrameTime timeFrame);
         public abstract void Draw(FrameTime timeFrame, IRenderContext contextRender);
+        
+        protected virtual void Dispose(bool flagDisposing) { }
         
         public virtual void Dispose() {
             if (_flagDisposed) { return; }
