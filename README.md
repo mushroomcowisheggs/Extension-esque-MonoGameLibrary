@@ -37,11 +37,16 @@ The MonoGameLibrary provides a clean separation of concerns with Core (platform-
 
 ### Installation
 
-1. Clone the repository:
+1. Clone the repository
+GitHub: 
    ```bash
-   git clone https://github.com/mushroomcowisheggs/Extension-esque-MonoGameLibrary.git
+   git clone https://github.com/Mushroomcowisheggs/Extension-esque-MonoGameLibrary.git
    ```
-2. Add a reference to `MonoGameLibrary.csproj` in your game project.
+Codeberg: 
+   ```bash
+   git clone https://codeberg.org/Mushroomcowisheggs/Extension-esque-MonoGameLibrary.git
+   ```
+1. Add a reference to `MonoGameLibrary.csproj` in your game project.
 
 ### Basic Usage (Composition Root)
 ```csharp
