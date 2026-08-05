@@ -106,19 +106,4 @@ namespace MonoGameLibrary.Extensions.States {
             GC.SuppressFinalize(this);
         }
     }
-    
-    public class StateChangeEventArgs : EventArgs {
-        public StateChangeType ChangeType { get; }
-        public State NewState { get; }
-        public StateChangeEventArgs(StateChangeType typeChange, State stateNew) {
-            ChangeType = typeChange;
-            NewState = stateNew;
-        }
-    }
-    
-    public enum StateChangeType {
-        Push,
-        Pop,
-        Change
-    }
 }
