@@ -91,18 +91,22 @@ namespace MonoGameLibrary.Extensions.States {
         public abstract void Update(FrameTime timeFrame);
         public abstract void Draw(FrameTime timeFrame, IRenderContext contextRender);
         
-        protected virtual void Dispose(bool flagDisposing) { }
-        
-        public virtual void Dispose() {
+        protected virtual void Dispose(bool flagDisposing) {
             if (_flagDisposed) { return; }
-            _flagDisposed = true;
-            if (ContentService is IDisposable disposable) {
-                disposable.Dispose();
+            if (flagDisposing) {
+                if (ContentService is IDisposable disposable) {
+                    disposable.Dispose();
+                }
             }
+            _flagDisposed = true;
+        }
+        
+        public void Dispose() {
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
     }
-
+    
     public class StateChangeEventArgs : EventArgs {
         public StateChangeType ChangeType { get; }
         public State NewState { get; }
@@ -111,7 +115,7 @@ namespace MonoGameLibrary.Extensions.States {
             NewState = stateNew;
         }
     }
-
+    
     public enum StateChangeType {
         Push,
         Pop,
