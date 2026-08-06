@@ -191,7 +191,9 @@ namespace MonoGameLibrary.Adapters.MonoGame.Audio {
             lock (_lock) {
                 foreach (var clip in _dictionaryClipCache.Values) {
                     if (clip is MonoGameAudioClip monoClip) {
-                        monoClip.SoundEffect?.Dispose();
+                        if (monoClip.SoundEffect != null) {
+                            monoClip.SoundEffect.Dispose();
+                        }
                     }
                 }
                 foreach (var instance in _listActiveSoundEffectInstances) {
