@@ -42,16 +42,16 @@ namespace MonoGameLibrary.Extensions.Screens {
         /// Initializes a new instance of the <see cref="Screen"/> class.
         /// </summary>
         protected Screen(
-            IContentService contentService,
+            IContentService serviceContent,
             Optional<ILogger> logger = default,
             Optional<IProfiler> profiler = default,
             Optional<IInputService> serviceInput = default
         ) {
-            if (contentService == null) {
-                throw new ArgumentNullException(nameof(contentService));
+            if (serviceContent == null) {
+                throw new ArgumentNullException(nameof(serviceContent));
             }
             
-            ContentService = contentService;
+            ContentService = serviceContent;
             Logger = logger.HasValue ? logger.Value : NullLogger.Instance;
             Profiler = profiler;
             InputService = serviceInput;
