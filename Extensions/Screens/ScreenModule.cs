@@ -5,7 +5,7 @@ using MonoGameLibrary.Extensions.Input;
 
 namespace MonoGameLibrary.Extensions.Screens {
     /// <summary>
-    /// Module that integrates the screen service with the GameHost lifecycle.
+    /// Module that integrates the screen service with the GameHost lifecycle. 
     /// </summary>
     public sealed class ScreenModule : IUpdateable, IDrawable {
         private readonly IScreenService _service;
@@ -15,8 +15,8 @@ namespace MonoGameLibrary.Extensions.Screens {
         private bool _flagVisible = true;
         
         public ScreenModule(IScreenService service, IInputService serviceInput, int order = 0) {
-            if (service == null) throw new ArgumentNullException(nameof(service));
-            if (serviceInput == null) throw new ArgumentNullException(nameof(serviceInput));
+            if (service == null) { throw new ArgumentNullException(nameof(service)); }
+            if (serviceInput == null) { throw new ArgumentNullException(nameof(serviceInput)); }
             _service = service;
             _serviceInput = serviceInput;
             _order = order;
