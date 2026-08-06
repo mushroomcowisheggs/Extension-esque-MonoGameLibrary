@@ -6,15 +6,15 @@ using MonoGameLibrary.Core.Lifecycle;
 using MonoGameLibrary.Core.Time;
 using MonoGameLibrary.Extensions.Input;
 
-namespace MonoGameLibrary.Extensions.States {
+namespace MonoGameLibrary.Extensions.Screens {
     /// <summary>
-    /// Represents a game state that can be managed by a state service.
+    /// Represents a game screen that can be managed by a screen service.
     /// </summary>
-    public abstract class State : IDisposable {
+    public abstract class Screen : IDisposable {
         private bool _flagDisposed;
         
         /// <summary>
-        /// Gets the content service used by this state.
+        /// Gets the content service used by this screen.
         /// </summary>
         protected IContentService ContentService { get; }
         
@@ -34,14 +34,14 @@ namespace MonoGameLibrary.Extensions.States {
         protected Optional<IInputService> InputService { get; }
         
         /// <summary>
-        /// Occurs when a state change (push, pop, or change) is requested.
+        /// Occurs when a screen change (push, pop, or change) is requested.
         /// </summary>
-        public event EventHandler<StateChangeEventArgs> StateChangeRequested;
+        public event EventHandler<ScreenChangeEventArguments> ScreenChangeRequested;
         
         /// <summary>
-        /// Initializes a new instance of the <see cref="State"/> class.
+        /// Initializes a new instance of the <see cref="Screen"/> class.
         /// </summary>
-        protected State(
+        protected Screen(
             IContentService contentService,
             Optional<ILogger> logger = default,
             Optional<IProfiler> profiler = default,
@@ -62,21 +62,21 @@ namespace MonoGameLibrary.Extensions.States {
         /// </summary>
         public virtual void LoadContent() { }
         
-        protected void RequestPush(State stateNew) {
-            if (StateChangeRequested != null) {
-                StateChangeRequested(this, new StateChangeEventArgs(StateChangeType.Push, stateNew));
+        protected void RequestPush(Screen screenNew) {
+            if (ScreenChangeRequested != null) {
+                ScreenChangeRequested(this, new ScreenChangeEventArguments(ScreenChangeType.Push, screenNew));
             }
         }
         
         protected void RequestPop() {
-            if (StateChangeRequested != null) {
-                StateChangeRequested(this, new StateChangeEventArgs(StateChangeType.Pop, null));
+            if (ScreenChangeRequested != null) {
+                ScreenChangeRequested(this, new ScreenChangeEventArguments(ScreenChangeType.Pop, null));
             }
         }
         
-        protected void RequestChange(State stateNew) {
-            if (StateChangeRequested != null) {
-                StateChangeRequested(this, new StateChangeEventArgs(StateChangeType.Change, stateNew));
+        protected void RequestChange(Screen screenNew) {
+            if (ScreenChangeRequested != null) {
+                ScreenChangeRequested(this, new ScreenChangeEventArguments(ScreenChangeType.Change, screenNew));
             }
         }
         

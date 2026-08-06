@@ -3,18 +3,18 @@ using MonoGameLibrary.Core.Lifecycle;
 using MonoGameLibrary.Core.Time;
 using MonoGameLibrary.Extensions.Input;
 
-namespace MonoGameLibrary.Extensions.States {
+namespace MonoGameLibrary.Extensions.Screens {
     /// <summary>
-    /// Module that integrates the state service with the GameHost lifecycle.
+    /// Module that integrates the screen service with the GameHost lifecycle.
     /// </summary>
-    public sealed class StateModule : IUpdateable, IDrawable {
-        private readonly IStateService _service;
+    public sealed class ScreenModule : IUpdateable, IDrawable {
+        private readonly IScreenService _service;
         private readonly IInputService _serviceInput;
         private readonly int _order;
         private bool _flagEnabled = true;
         private bool _flagVisible = true;
         
-        public StateModule(IStateService service, IInputService serviceInput, int order = 0) {
+        public ScreenModule(IScreenService service, IInputService serviceInput, int order = 0) {
             if (service == null) throw new ArgumentNullException(nameof(service));
             if (serviceInput == null) throw new ArgumentNullException(nameof(serviceInput));
             _service = service;

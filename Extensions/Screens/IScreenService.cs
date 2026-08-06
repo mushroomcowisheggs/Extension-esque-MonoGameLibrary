@@ -2,38 +2,38 @@ using MonoGameLibrary.Core.Lifecycle;
 using MonoGameLibrary.Core.Time;
 using MonoGameLibrary.Extensions.Input;
 
-namespace MonoGameLibrary.Extensions.States {
+namespace MonoGameLibrary.Extensions.Screens {
     /// <summary>
-    /// Manages a stack of game states.
+    /// Manages a stack of game screens.
     /// </summary>
-    public interface IStateService {
+    public interface IScreenService {
         /// <summary>
-        /// Gets the current active state.
+        /// Gets the current active screen.
         /// </summary>
-        State CurrentState { get; }
+        Screen CurrentScreen { get; }
         
         /// <summary>
-        /// Pushes a new state onto the stack.
+        /// Pushes a new screen onto the stack.
         /// </summary>
-        void Push(State state);
+        void Push(Screen screen);
         
         /// <summary>
-        /// Pops the current state from the stack.
+        /// Pops the current screen from the stack.
         /// </summary>
         void Pop();
         
         /// <summary>
-        /// Replaces the entire stack with a single state.
+        /// Replaces the entire stack with a single screen.
         /// </summary>
-        void Change(State state);
+        void Change(Screen screen);
         
         /// <summary>
-        /// Updates all active states.
+        /// Updates all active screens.
         /// </summary>
         void Update(FrameTime timeFrame, IInputService serviceInput);
         
         /// <summary>
-        /// Draws all visible states.
+        /// Draws all visible screens.
         /// </summary>
         void Draw(FrameTime timeFrame, IRenderContext contextRender);
     }

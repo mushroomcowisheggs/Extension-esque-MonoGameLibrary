@@ -7,7 +7,7 @@ using MonoGameLibrary.Core.Pooling;
 using MonoGameLibrary.Extensions.Audio;
 using MonoGameLibrary.Extensions.Input;
 using MonoGameLibrary.Extensions.Scenes;
-using MonoGameLibrary.Extensions.States;
+using MonoGameLibrary.Extensions.Screens;
 
 namespace MonoGameLibrary.Extensions {
     /// <summary>
@@ -111,29 +111,29 @@ namespace MonoGameLibrary.Extensions {
         }
         
         /// <summary>
-        /// Registers the state service and its host module.
+        /// Registers the screen service and its host module.
         /// </summary>
         /// <param name="builder">The game builder.</param>
         /// <param name="order">Execution order for the module (default 0).</param>
         /// <returns>The builder for chaining.</returns>
         /// <exception cref="ArgumentNullException">Thrown if builder is null.</exception>
         /// <exception cref="InvalidOperationException">Thrown if IInputService is not registered.</exception>
-        public static GameBuilder UseStates(this GameBuilder builder, int order = 0) {
+        public static GameBuilder UseScreens(this GameBuilder builder, int order = 0) {
             if (builder == null) {
                 throw new ArgumentNullException(nameof(builder));
             }
             
             if (!builder.TryGetService<IInputService>(out var serviceInput)) {
                 throw new InvalidOperationException(
-                    "IInputService must be registered before calling UseStates. " +
+                    "IInputService must be registered before calling UseScreens. " +
                     "Use builder.UseInput() or register manually."
                 );
             }
             
-            var service = new StateService();
-            builder.RegisterService<IStateService>(service);
+            var service = new ScreenService();
+            builder.RegisterService<IScreenService>(service);
             
-            var module = new StateModule(service, serviceInput, order);
+            var module = new ScreenModule(service, serviceInput, order);
             builder.AddModule(module);
             
             return builder;
