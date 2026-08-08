@@ -52,12 +52,12 @@ namespace MonoGameLibrary.Extensions.Scenes {
         }
         
         /// <inheritdoc />
-        public void Draw(FrameTime timeFrame, IRenderContext contextRender) {
-            if (!Visible) {
+        public void Draw(FrameTime timeFrame) {
+            if (!_flagVisible) {
                 return;
             }
             
-            _service.Draw(timeFrame, contextRender);
+            _service.Draw(timeFrame);
         }
     }
 }

@@ -4,8 +4,10 @@ using System.IO;
 using System.Xml;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGameLibrary.Core.Content;
 using MonoGameLibrary.Core.Hosting;
 using MonoGameLibrary.Adapters.MonoGame;
+using MonoGameLibrary.Extensions.Graphics;
 
 namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
     /// <summary>
@@ -27,16 +29,16 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
         private readonly Dictionary<string, TextureRegion> _regions;
         private readonly Dictionary<string, Animation> _animations;
         private bool _flagDisposed;
-
-        /// <summary>Gets the underlying texture containing all regions.</summary>
-        public Texture2D Texture { get; private set; }
+        
+        /// <summary>Gets the texture containing all regions. </summary>
+        public ITwoDimensionalTexture Texture { get; private set; }
         
         private TextureAtlas() {
             _regions = new Dictionary<string, TextureRegion>();
             _animations = new Dictionary<string, Animation>();
         }
         
-        public TextureAtlas(Texture2D texture) {
+        public TextureAtlas(ITwoDimensionalTexture texture) {
             if (texture == null) {
                 throw new ArgumentNullException(nameof(texture));
             }
@@ -56,10 +58,10 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
         public static TextureAtlas FromStream(IContentService serviceContent, Stream stream) {
             if (serviceContent == null) { throw new ArgumentNullException(nameof(serviceContent)); }
             if (stream == null) { throw new ArgumentNullException(nameof(stream)); }
-
+            
             XmlDocument document = new XmlDocument();
             document.Load(stream);
-
+            
             XmlNode nodeRoot = document.DocumentElement;
             if (nodeRoot == null) {
                 throw new InvalidOperationException("XML document has no root element.");
@@ -69,7 +71,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
                     $"Invalid atlas definition: root element must be 'TextureAtlas', got '{nodeRoot.Name}'."
                 );
             }
-
+            
             // Load texture.
             XmlNode nodeTexture = nodeRoot.SelectSingleNode("Texture");
             if (nodeTexture == null) {
@@ -82,20 +84,17 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             if (string.IsNullOrWhiteSpace(assetTexture)) {
                 throw new InvalidOperationException("Texture asset path is empty.");
             }
-
-            TextureAtlas atlas = new TextureAtlas();
-            atlas.Texture = serviceContent.Load<Texture2D>(assetTexture);
-            if (atlas.Texture == null) {
-                throw new InvalidOperationException($"Failed to load texture asset '{assetTexture}'.");
-            }
-
+            
+            ITwoDimensionalTexture textureAsset = serviceContent.Load<ITwoDimensionalTexture>(assetTexture);
+            TextureAtlas atlas = new TextureAtlas(textureAsset);
+            
             // Parse regions.
             XmlNode nodeRegions = nodeRoot.SelectSingleNode("Regions");
             if (nodeRegions != null) {
                 foreach (XmlNode nodeRegion in nodeRegions.ChildNodes) {
                     if (nodeRegion.NodeType != XmlNodeType.Element) { continue; }
                     if (nodeRegion.Name != "Region") { continue; }
-
+                    
                     string name = GetAttribute(nodeRegion, "name");
                     if (string.IsNullOrWhiteSpace(name)) {
                         throw new InvalidOperationException("Region missing 'name' attribute.");
@@ -104,21 +103,21 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
                     int y = GetIntAttribute(nodeRegion, "y");
                     int width = GetIntAttribute(nodeRegion, "width");
                     int height = GetIntAttribute(nodeRegion, "height");
-
+                    
                     TextureRegion region = new TextureRegion(atlas.Texture, new Rectangle(x, y, width, height));
                     if (!atlas._regions.TryAdd(name, region)) {
                         throw new InvalidOperationException($"Duplicate region name '{name}'.");
                     }
                 }
             }
-
+            
             // Parse animations.
             XmlNode nodeAnimations = nodeRoot.SelectSingleNode("Animations");
             if (nodeAnimations != null) {
                 foreach (XmlNode nodeAnimation in nodeAnimations.ChildNodes) {
                     if (nodeAnimation.NodeType != XmlNodeType.Element) { continue; }
                     if (nodeAnimation.Name != "Animation") { continue; }
-
+                    
                     string name = GetAttribute(nodeAnimation, "name");
                     if (string.IsNullOrWhiteSpace(name)) {
                         throw new InvalidOperationException("Animation missing 'name' attribute.");
@@ -130,14 +129,14 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
                             millisecondsDelay = 100;
                         }
                     }
-
+                    
                     Animation animation = new Animation();
                     animation.Delay = TimeSpan.FromMilliseconds(millisecondsDelay);
-
+                    
                     foreach (XmlNode nodeFrame in nodeAnimation.ChildNodes) {
                         if (nodeFrame.NodeType != XmlNodeType.Element) { continue; }
                         if (nodeFrame.Name != "Frame") { continue; }
-
+                        
                         string nameRegion = GetAttribute(nodeFrame, "region");
                         if (string.IsNullOrWhiteSpace(nameRegion)) {
                             throw new InvalidOperationException($"Frame in animation '{name}' missing 'region' attribute.");
@@ -149,7 +148,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
                         }
                         animation.Frames.Add(region);
                     }
-
+                    
                     if (animation.Frames.Count == 0) {
                         throw new InvalidOperationException($"Animation '{name}' has no frames.");
                     }
@@ -158,7 +157,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
                     }
                 }
             }
-
+            
             return atlas;
         }
         
@@ -168,7 +167,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             if (attribute == null) { return null; }
             return attribute.Value;
         }
-
+        
         private static int GetIntAttribute(XmlNode node, string nameAttribute) {
             string value = GetAttribute(node, nameAttribute);
             if (string.IsNullOrWhiteSpace(value)) {
@@ -179,7 +178,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             }
             return result;
         }
-
+        
         /// <summary>
         /// Gets a texture region by name.
         /// </summary>
@@ -195,7 +194,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             }
             throw new KeyNotFoundException($"Texture region '{name}' not found.");
         }
-
+        
         /// <summary>
         /// Indexer for retrieving a region by name.
         /// </summary>
@@ -234,7 +233,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             }
             throw new KeyNotFoundException($"Animation '{nameAnimation}' not found.");
         }
-
+        
         /// <summary>
         /// Tries to create an animated sprite.
         /// </summary>
@@ -250,16 +249,12 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             }
             return false;
         }
-
+        
         /// <summary>
         /// Disposes the underlying texture.
         /// </summary>
         public void Dispose() {
             if (_flagDisposed) { return; }
-            if (Texture != null) {
-                Texture.Dispose();
-                Texture = null;
-            }
             _regions.Clear();
             _animations.Clear();
             _flagDisposed = true;

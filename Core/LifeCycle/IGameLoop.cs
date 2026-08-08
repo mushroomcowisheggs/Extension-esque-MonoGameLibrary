@@ -1,3 +1,5 @@
+using System;
+
 namespace MonoGameLibrary.Core.Lifecycle {
     /// <summary>
     /// Defines a custom game loop that replaces any framework-specific Game loop. 

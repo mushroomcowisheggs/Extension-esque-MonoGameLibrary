@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using MonoGameLibrary.Core.Lifecycle;
 using MonoGameLibrary.Core.Time;
-using MonoGameLibrary.Extensions.Input;
 
 namespace MonoGameLibrary.Extensions.Screens {
     /// <summary>
@@ -13,6 +12,13 @@ namespace MonoGameLibrary.Extensions.Screens {
         private bool _flagIsProcessing;
         private readonly Queue<Action> _queueOperation = new Queue<Action>();
         
+        /// <summary>
+        /// Raised each frame to request drawing of the active scene.
+        /// The game layer subscribes and provides the actual rendering.
+        /// </summary>
+        public event Action<FrameTime> DrawRequested;
+        
+        /// <inheritdoc />
         public Screen CurrentScreen { get { return _screens.Count > 0 ? _screens[_screens.Count - 1] : null; } }
         
         private void SubscribeScreen(Screen screen) {
@@ -37,6 +43,7 @@ namespace MonoGameLibrary.Extensions.Screens {
             }
         }
         
+        /// <inheritdoc />
         public void Push(Screen screen) {
             Action operation = delegate () {
                 if (_screens.Count > 0)
@@ -48,6 +55,7 @@ namespace MonoGameLibrary.Extensions.Screens {
             QueueOrExecute(operation);
         }
         
+        /// <inheritdoc />
         public void Pop() {
             Action operation = delegate () {
                 if (_screens.Count > 0) {
@@ -63,6 +71,7 @@ namespace MonoGameLibrary.Extensions.Screens {
             QueueOrExecute(operation);
         }
         
+        /// <inheritdoc />
         public void Change(Screen screen) {
             Action operation = delegate () {
                 while (_screens.Count > 0) {
@@ -87,7 +96,8 @@ namespace MonoGameLibrary.Extensions.Screens {
             }
         }
         
-        public void Update(FrameTime timeFrame, IInputService serviceInput) {
+        /// <inheritdoc />
+        public void Update(FrameTime timeFrame) {
             _flagIsProcessing = true;
             while (_queueOperation.Count > 0) {
                 var op = _queueOperation.Dequeue();
@@ -98,7 +108,9 @@ namespace MonoGameLibrary.Extensions.Screens {
             
             for (int i = _screens.Count - 1; i >= 0; i -= 1) {
                 var screen = _screens[i];
-                screen.HandleInput(timeFrame, serviceInput);
+                if (screen.InputAction != null) {
+                    screen.InputAction.Invoke(timeFrame);
+                }
                 screen.Update(timeFrame);
                 if (screen.IsBlocking) {
                     break;
@@ -107,17 +119,10 @@ namespace MonoGameLibrary.Extensions.Screens {
             _flagIsProcessing = false;
         }
         
-        public void Draw(FrameTime timeFrame, IRenderContext contextRender) {
-            bool flagFoundOpaque = false;
-            for (int i = 0; i < _screens.Count; i += 1) {
-                var screen = _screens[i];
-                if (!flagFoundOpaque || screen.IsTransparent) {
-                    screen.Draw(timeFrame, contextRender);
-                }
-                
-                if (!screen.IsTransparent) {
-                    flagFoundOpaque = true;
-                }
+        /// <inheritdoc />
+        public void Draw(FrameTime timeFrame) {
+            if (DrawRequested != null) {
+                DrawRequested.Invoke(timeFrame);
             }
         }
     }

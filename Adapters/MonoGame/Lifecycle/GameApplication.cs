@@ -13,7 +13,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Lifecycle {
         /// <param name="actionConfigureServices">Callback to register services and modules.</param>
         /// <returns>The initialized and running IGameHost.</returns>
         /// <exception cref="ArgumentNullException">Thrown if actionConfigureServices is null.</exception>
-        public static IGameHost Start(Action<IGameBuilder> actionConfigureServices) {
+        public static IGameHost Start(Action<GameBuilder> actionConfigureServices) {
             if (actionConfigureServices == null) {
                 throw new ArgumentNullException(nameof(actionConfigureServices));
             }
@@ -22,7 +22,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Lifecycle {
             actionConfigureServices(builder);
             IGameHost host = builder.Build();
             
-            var gameMonoGame = new MonoGameIntegrationGame(host);
+            var gameMonoGame = new IntegrationGame(host);
             gameMonoGame.Run();
             
             return host;

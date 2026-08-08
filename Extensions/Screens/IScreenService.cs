@@ -1,6 +1,5 @@
 using MonoGameLibrary.Core.Lifecycle;
 using MonoGameLibrary.Core.Time;
-using MonoGameLibrary.Extensions.Input;
 
 namespace MonoGameLibrary.Extensions.Screens {
     /// <summary>
@@ -30,11 +29,11 @@ namespace MonoGameLibrary.Extensions.Screens {
         /// <summary>
         /// Updates all active screens.
         /// </summary>
-        void Update(FrameTime timeFrame, IInputService serviceInput);
+        void Update(FrameTime timeFrame);
         
         /// <summary>
         /// Draws all visible screens.
         /// </summary>
-        void Draw(FrameTime timeFrame, IRenderContext contextRender);
+        void Draw(FrameTime timeFrame);
     }
 }

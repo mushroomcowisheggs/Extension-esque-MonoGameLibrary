@@ -4,63 +4,44 @@ using MonoGameLibrary.Core.Diagnostics;
 using MonoGameLibrary.Core.Hosting;
 using MonoGameLibrary.Core.Lifecycle;
 using MonoGameLibrary.Core.Time;
-using MonoGameLibrary.Extensions.Input;
 
 namespace MonoGameLibrary.Extensions.Screens {
-    /// <summary>
-    /// Represents a game screen that can be managed by a screen service.
-    /// </summary>
-    public abstract class Screen : IDisposable {
+    /// <inheritdoc />
+    public abstract class Screen : IScreen {
         private bool _flagDisposed;
         
         /// <summary>
-        /// Gets the content service used by this screen.
+        /// Delegate for actual content loading. Set by the game layer. 
+        /// Called inside <see cref="LoadContent"/>.
         /// </summary>
-        protected IContentService ContentService { get; }
+        public Action LoadContentAction { get; set; }
         
         /// <summary>
-        /// Gets the logger (optional).
+        /// Delegate for handling input. Set by the game layer. 
+        /// Receives the current frame time. 
         /// </summary>
-        protected ILogger Logger { get; }
+        public Action<FrameTime> InputAction { get; set; }
         
-        /// <summary>
-        /// Gets the profiler (optional).
-        /// </summary>
-        protected Optional<IProfiler> Profiler { get; }
-        
-        /// <summary>
-        /// Gets the input service (optional).
-        /// </summary>
-        protected Optional<IInputService> InputService { get; }
-        
-        /// <summary>
-        /// Occurs when a screen change (push, pop, or change) is requested.
-        /// </summary>
+        /// <inheritdoc />
         public event EventHandler<ScreenChangeEventArguments> ScreenChangeRequested;
         
         /// <summary>
         /// Initializes a new instance of the <see cref="Screen"/> class.
         /// </summary>
         protected Screen(
-            IContentService serviceContent,
-            Optional<ILogger> logger = default,
-            Optional<IProfiler> profiler = default,
-            Optional<IInputService> serviceInput = default
         ) {
-            if (serviceContent == null) {
-                throw new ArgumentNullException(nameof(serviceContent));
-            }
-            
-            ContentService = serviceContent;
-            Logger = logger.HasValue ? logger.Value : NullLogger.Instance;
-            Profiler = profiler;
-            InputService = serviceInput;
         }
         
-        /// <summary>
-        /// Called once to load content. Override to load textures, sounds, etc.
-        /// </summary>
-        public virtual void LoadContent() { }
+        /// <inheritdoc />
+        public virtual void LoadContent() {
+            if (LoadContentAction != null) {
+                LoadContentAction.Invoke();
+            }
+        }
+        
+        /// <inheritdoc />
+        public virtual void Initialize() {
+        }
         
         protected void RequestPush(Screen screenNew) {
             if (ScreenChangeRequested != null) {
@@ -80,29 +61,42 @@ namespace MonoGameLibrary.Extensions.Screens {
             }
         }
         
-        public virtual void HandleInput(FrameTime timeFrame, IInputService input) { }
-        
+        /// <inheritdoc />
         public virtual bool IsTransparent { get { return false; } }
+        /// <inheritdoc />
         public virtual bool IsBlocking { get { return false; } }
         
+        /// <inheritdoc />
         public virtual void Enter() { }
+        /// <inheritdoc />
         public virtual void Exit() { }
         
+        /// <inheritdoc />
         public abstract void Update(FrameTime timeFrame);
-        public abstract void Draw(FrameTime timeFrame, IRenderContext contextRender);
         
+        /// <summary>
+        /// Override to release managed resources. 
+        /// </summary>
+        /// <param name="flagDisposing">True if called from Dispose; false if from finalizer.</param>
         protected virtual void Dispose(bool flagDisposing) {
             if (_flagDisposed) { return; }
             if (flagDisposing) {
-                if (ContentService is IDisposable disposable) {
-                    disposable.Dispose();
-                }
+                // Ensure that all screen-specific resources are unloaded
             }
+            
             _flagDisposed = true;
         }
         
+        /// <summary>
+        /// Disposes the screen and releases resources. 
+        /// </summary>
         public void Dispose() {
+            if (_flagDisposed) {
+                return;
+            }
+            
             Dispose(true);
+            _flagDisposed = true;
             GC.SuppressFinalize(this);
         }
     }

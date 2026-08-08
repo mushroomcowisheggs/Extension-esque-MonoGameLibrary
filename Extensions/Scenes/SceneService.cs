@@ -12,50 +12,21 @@ namespace MonoGameLibrary.Extensions.Scenes {
     /// </summary>
     public sealed class SceneService : ISceneService, IDisposable {
         private readonly object _lock = new object();
-        private readonly IContentService _serviceContent;
-        private readonly ILogger _logger;
-        private readonly Optional<IProfiler> _profiler;
-        private readonly Optional<IContentServiceFactory> _factoryContent;
         private Scene _sceneCurrent;
         private Scene _scenePending;
         private bool _flagDisposed;
         
         /// <summary>
-        /// Initializes a new instance of the <see cref="SceneService"/> class 
-        /// without automatic content factory support. 
+        /// Raised when a scene switch occurs, allowing the game layer to perform
+        /// additional setup (e.g., injecting content loading delegate).
         /// </summary>
-        /// <param name="serviceContent">Content service used by scenes (for factory overload). </param>
-        /// <param name="logger">Logger for diagnostic output.</param>
-        /// <param name="profiler">Optional profiler for performance measurements. </param>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="serviceContent"/> is null. </exception>
-        public SceneService(IContentService serviceContent, Optional<ILogger> logger = default, Optional<IProfiler> profiler = default) {
-            if (serviceContent == null) {
-                throw new ArgumentNullException(nameof(serviceContent));
-            }
-            
-            _serviceContent = serviceContent;
-            _logger = logger.HasValue ? logger.Value : NullLogger.Instance;
-            _profiler = profiler;
-        }
+        public event Action<Scene> SceneSwitched;
         
         /// <summary>
-        /// Initializes a new instance of the <see cref="SceneService"/> class 
-        /// with an optional content factory for automatic resource management. 
+        /// Raised each frame to request drawing of the active scene.
+        /// The game layer subscribes and provides the actual rendering.
         /// </summary>
-        /// <param name="serviceContent">Content service used for compatibility (may be shared). </param>
-        /// <param name="factoryContent">Factory used to create new content services for scenes when using the factory-based switch method. </param>
-        /// <param name="logger">Logger for diagnostic output. </param>
-        /// <param name="profiler">Optional profiler for performance measurements. </param>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="serviceContent"/> is null. </exception>
-        public SceneService(IContentService serviceContent, Optional<IContentServiceFactory> factoryContent, Optional<ILogger> logger = default, Optional<IProfiler> profiler = default) {
-            if (serviceContent == null)
-                throw new ArgumentNullException(nameof(serviceContent));
-
-            _serviceContent = serviceContent;
-            _factoryContent = factoryContent;
-            _logger = logger.HasValue ? logger.Value : NullLogger.Instance;
-            _profiler = profiler;
-        }
+        public event Action<FrameTime> DrawRequested;
         
         /// <inheritdoc />
         public Scene CurrentScene {
@@ -70,24 +41,6 @@ namespace MonoGameLibrary.Extensions.Scenes {
             lock (_lock) {
                 _scenePending = scene;
             }
-        }
-
-        /// <inheritdoc />
-        public void ChangeScene(Func<IContentService, Scene> factory) {
-            if (factory == null) {
-                throw new ArgumentNullException(nameof(factory));
-            }
-            if (!_factoryContent.HasValue) {
-                throw new InvalidOperationException("No IContentServiceFactory registered. Cannot auto-create content.");
-            }
-            
-            IContentService contentNew = _factoryContent.Value.Create();
-            Scene sceneNew = factory(contentNew);
-            if (sceneNew == null) {
-                throw new InvalidOperationException("The scene factory returned null.");
-            }
-            
-            ChangeScene(sceneNew);
         }
         
         /// <inheritdoc />
@@ -109,8 +62,15 @@ namespace MonoGameLibrary.Extensions.Scenes {
                     _sceneCurrent.Dispose();
                 }
                 _sceneCurrent = sceneToActivate;
+                
+                // Trigger content loading (delegate set by game layer)
                 _sceneCurrent.LoadContent();
                 _sceneCurrent.Initialize();
+                
+                // Notify game layer about the switch
+                if (SceneSwitched != null) {
+                    SceneSwitched.Invoke(_sceneCurrent);
+                }
             }
             
             if (_sceneCurrent != null && _sceneCurrent.Enabled) {
@@ -119,13 +79,13 @@ namespace MonoGameLibrary.Extensions.Scenes {
         }
         
         /// <inheritdoc />
-        public void Draw(FrameTime timeFrame, IRenderContext contextRender) {
+        public void Draw(FrameTime timeFrame) {
             if (_flagDisposed) {
                 return;
             }
             
-            if (_sceneCurrent != null && _sceneCurrent.Visible) {
-                _sceneCurrent.Draw(timeFrame, contextRender);
+            if (DrawRequested != null) {
+                DrawRequested.Invoke(timeFrame);
             }
         }
         

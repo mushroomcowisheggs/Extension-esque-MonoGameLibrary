@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Gum.Forms;
 using Gum.Forms.Controls;
 using Gum.Wireframe;
@@ -6,14 +7,13 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MonoGameGum;
 using MonoGameLibrary.Core.Time;
-using MonoGameLibrary.Extensions.Input;
 using MonoGameLibrary.Extensions.UserInterface;
 
 namespace MonoGameLibrary.Adapters.Gum {
     /// <summary>
     /// Gum implementation of <see cref="IUserInterfaceService"/>.
     /// </summary>
-    public sealed class GumService : IUserInterfaceService, ITabNavigationSupport, IDisposable {
+    public sealed class GumService : IUserInterfaceService, IDisposable {
         private readonly Game _game;
         private readonly DefaultVisualsVersion _version;
         private readonly object _lock = new object();
@@ -25,15 +25,34 @@ namespace MonoGameLibrary.Adapters.Gum {
         /// </summary>
         /// <param name="game">The running MonoGame game instance. </param>
         /// <param name="version">The Gum visual version. </param>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="game"/> or <paramref name="managerContent"/> is null. </exception>
-        public GumService(Game game, DefaultVisualsVersion version) {
+        /// <param name="tabForwardKeys">Keys to navigate forward (default: Tab).</param>
+        /// <param name="tabReverseKeys">Keys to navigate backward (default: Shift+Tab).</param>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="game"/> is null. </exception>
+        public GumService(
+            Game game, 
+            DefaultVisualsVersion version, 
+            IEnumerable<Keys> tabForwardKeys = null, 
+            IEnumerable<Keys> tabReverseKeys = null
+        ) {
             if (game == null) {
                 throw new ArgumentNullException(nameof(game));
             }
             _game = game;
             _version = version;
+            
+            // Apply tab navigation keys if provided
+            if (tabForwardKeys != null) {
+                foreach (var key in tabForwardKeys) {
+                    FrameworkElement.TabKeyCombos.Add(new KeyCombo { PushedKey = key });
+                }
+            }
+            if (tabReverseKeys != null) {
+                foreach (var key in tabReverseKeys) {
+                    FrameworkElement.TabReverseKeyCombos.Add(new KeyCombo { PushedKey = key });
+                }
+            }
         }
-
+        
         /// <inheritdoc />
         public void Initialize() {
             lock (_lock) {
@@ -91,83 +110,11 @@ namespace MonoGameLibrary.Adapters.Gum {
         /// <inheritdoc />
         public void ConfigureInput(bool flagEnableKeyboard = true, bool flagEnableGamepad = true) {
             EnsureInitialized();
-            
-            // Keyboard input
             if (flagEnableKeyboard) {
                 FrameworkElement.KeyboardsForUiControl.Add(global::MonoGameGum.GumService.Default.Keyboard);
             }
-            
-            // Gamepad input
             if (flagEnableGamepad) {
                 FrameworkElement.GamePadsForUiControl.AddRange(global::MonoGameGum.GumService.Default.Gamepads);
-            }
-        }
-        
-        /// <inheritdoc />
-        public void AddTabForwardKey(KeyCode codeKey) {
-            EnsureInitialized();
-            Keys key = ConvertKeyCode(codeKey);
-            FrameworkElement.TabKeyCombos.Add(new KeyCombo { PushedKey = key });
-        }
-        
-        /// <inheritdoc />
-        public void AddTabReverseKey(KeyCode codeKey) {
-            EnsureInitialized();
-            Keys key = ConvertKeyCode(codeKey);
-            FrameworkElement.TabReverseKeyCombos.Add(new KeyCombo { PushedKey = key });
-        }
-        
-        private static Keys ConvertKeyCode(KeyCode codeKey) {
-            switch (codeKey) {
-                case KeyCode.None: return Keys.None;
-                case KeyCode.A: return Keys.A;
-                case KeyCode.B: return Keys.B;
-                case KeyCode.C: return Keys.C;
-                case KeyCode.D: return Keys.D;
-                case KeyCode.E: return Keys.E;
-                case KeyCode.F: return Keys.F;
-                case KeyCode.G: return Keys.G;
-                case KeyCode.H: return Keys.H;
-                case KeyCode.I: return Keys.I;
-                case KeyCode.J: return Keys.J;
-                case KeyCode.K: return Keys.K;
-                case KeyCode.L: return Keys.L;
-                case KeyCode.M: return Keys.M;
-                case KeyCode.N: return Keys.N;
-                case KeyCode.O: return Keys.O;
-                case KeyCode.P: return Keys.P;
-                case KeyCode.Q: return Keys.Q;
-                case KeyCode.R: return Keys.R;
-                case KeyCode.S: return Keys.S;
-                case KeyCode.T: return Keys.T;
-                case KeyCode.U: return Keys.U;
-                case KeyCode.V: return Keys.V;
-                case KeyCode.W: return Keys.W;
-                case KeyCode.X: return Keys.X;
-                case KeyCode.Y: return Keys.Y;
-                case KeyCode.Z: return Keys.Z;
-                case KeyCode.Space: return Keys.Space;
-                case KeyCode.Enter: return Keys.Enter;
-                case KeyCode.Escape: return Keys.Escape;
-                case KeyCode.Tab: return Keys.Tab;
-                case KeyCode.Backspace: return Keys.Back;
-                case KeyCode.Up: return Keys.Up;
-                case KeyCode.Down: return Keys.Down;
-                case KeyCode.Left: return Keys.Left;
-                case KeyCode.Right: return Keys.Right;
-                case KeyCode.F1: return Keys.F1;
-                case KeyCode.F2: return Keys.F2;
-                case KeyCode.F3: return Keys.F3;
-                case KeyCode.F4: return Keys.F4;
-                case KeyCode.F5: return Keys.F5;
-                case KeyCode.F6: return Keys.F6;
-                case KeyCode.F7: return Keys.F7;
-                case KeyCode.F8: return Keys.F8;
-                case KeyCode.F9: return Keys.F9;
-                case KeyCode.F10: return Keys.F10;
-                case KeyCode.F11: return Keys.F11;
-                case KeyCode.F12: return Keys.F12;
-                default: return Keys.None;
             }
         }
         

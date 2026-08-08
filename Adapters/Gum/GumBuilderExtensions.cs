@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using Gum.Forms;
 using Gum.Forms.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Input;
 using MonoGameLibrary.Core.Hosting;
 using MonoGameLibrary.Extensions.UserInterface;
 
@@ -15,17 +17,26 @@ namespace MonoGameLibrary.Adapters.Gum {
         /// <param name="game">The running game instance.</param>
         /// <param name="managerContent">The ContentManager used by Gum to load assets.</param>
         /// <param name="version">Gum visual version.</param>
-        /// <returns>The builder for chaining.</returns>
+        /// <returns>The builder. </returns>
         /// <exception cref="ArgumentNullException">Thrown if builder, game, or managerContent is null.</exception>
-        public static GameBuilder UseGum(this GameBuilder builder, Game game, ContentManager managerContent, DefaultVisualsVersion version) {
+        public static GameBuilder UseGum(
+            this GameBuilder builder, 
+            Game game, 
+            ContentManager managerContent, 
+            DefaultVisualsVersion version, 
+            IEnumerable<Keys> tabForwardKeys = null, 
+            IEnumerable<Keys> tabReverseKeys = null
+        ) {
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
             if (game == null) { throw new ArgumentNullException(nameof(game)); }
             if (managerContent == null) { throw new ArgumentNullException(nameof(managerContent)); }
             
             // Create the Gum service with its dependencies
             var serviceGum = new GumService(
-                game,
-                version
+                game, 
+                version, 
+                tabForwardKeys, 
+                tabReverseKeys
             );
             
             // Register the service so other modules can inject IUserInterfaceService if needed

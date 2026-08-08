@@ -1,4 +1,6 @@
 using System;
+using MonoGameLibrary.Core.Content;
+using MonoGameLibrary.Core.Time;
 
 namespace MonoGameLibrary.Core.Hosting {
     /// <summary>
@@ -10,10 +12,15 @@ namespace MonoGameLibrary.Core.Hosting {
         /// If not set, exceptions are rethrown. 
         /// </summary>
         Action<Exception, string> OnError { get; set; }
+        
         IServiceRegistry Services { get; }
+        
         void AddModule(object module);
+        
         void Initialize(IContentService serviceContent);
+        
         void Update(FrameTime timeFrame);
-        void Draw(FrameTime timeFrame, IRenderContext contextRender);
+        
+        void Draw(FrameTime timeFrame);
     }
 }

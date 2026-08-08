@@ -1,5 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGameLibrary.Core.Primitives;
+using MonoGameLibrary.Extensions.Graphics;
 
 namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
     /// <summary>
@@ -14,7 +16,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
         /// <summary>
         /// Gets or sets the tint color. 
         /// </summary>
-        public Color Color { get; set; } = Color.White;
+        public Microsoft.Xna.Framework.Color Color { get; set; } = Microsoft.Xna.Framework.Color.White;
         
         /// <summary>
         /// Gets or sets the scale. 
@@ -64,14 +66,36 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
         /// <summary>
         /// Draws the sprite with the supplied sprite batch. 
         /// </summary>
-        /// <param name="batchSprite">The SpriteBatch instance used for batching draw calls. </param>
+        /// <param name="contextRender">The RenderContext instance used for draw calls. </param>
         /// <param name="position">The xy-coordinate position to render this sprite at. </param>
-        public void Draw(SpriteBatch batchSprite, Vector2 position) {
-            if (batchSprite == null || Region == null || Region.Texture == null) {
+        public void Draw(IRenderContext contextRender, Vector2 position) {
+            if (contextRender == null || Region == null || Region.Texture == null) {
                 return;
             }
             
-            batchSprite.Draw(Region.Texture, position, Region.SourceRectangle, Color, 0f, Origin, Scale, SpriteEffects.None, 0f);
+            var color = new Core.Primitives.Color(Color.R, Color.G, Color.B, Color.A);
+            var vectorOrigin = new TwoDimensionalVector(Origin.X, Origin.Y);
+            var vectorScale = new TwoDimensionalVector(Scale.X, Scale.Y);
+            var vectorPosition = new TwoDimensionalVector(position.X, position.Y);
+            
+            var rectangleSource = new Core.Primitives.Rectangle(
+                Region.SourceRectangle.X,
+                Region.SourceRectangle.Y,
+                Region.SourceRectangle.Width,
+                Region.SourceRectangle.Height
+            );
+            
+            Region.Texture.DrawInto(
+                contextRender,
+                vectorPosition,
+                new OptionalValue<Core.Primitives.Rectangle>(rectangleSource),
+                color,
+                0f,
+                vectorOrigin,
+                vectorScale,
+                MonoGameLibrary.Extensions.Graphics.SpriteEffects.None,
+                0f
+            );
         }
     }
 }

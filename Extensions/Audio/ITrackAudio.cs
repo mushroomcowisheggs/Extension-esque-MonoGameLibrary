@@ -1,0 +1,12 @@
+using System;
+using MonoGameLibrary.Core.Content;
+
+namespace MonoGameLibrary.Extensions.Audio {
+    /// <summary>
+    /// Represents a long-form audio track that can be played. 
+    /// </summary>
+    public interface ITrackAudio : IAsset {
+        /// <summary>Duration of the audio track. </summary>
+        TimeSpan Duration { get; }
+    }
+}

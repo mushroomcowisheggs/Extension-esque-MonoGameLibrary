@@ -13,7 +13,7 @@ The MonoGameLibrary provides a clean separation of concerns with Core (platform-
 - Base lifecycle contracts for consistent system behavior
 
 ### Adapters (Bindings)
-- `MonoGameContentService`: Streamlined content loading
+- `ContentService`: Streamlined content loading
 - `MonoGameAdapter`: Bridge between library systems and MonoGame’s `Game` class
 - `GumService`: Integration with the Gum UI framework
 
@@ -59,7 +59,7 @@ builder.UseDefaultServices();
 builder.UseAudio();
 builder.UseInput();
 
-var serviceContent = new MonoGameContentService(Content);
+var serviceContent = new ContentService(Content);
 builder.RegisterService<IContentService>(serviceContent);
 
 var host = builder.Build();

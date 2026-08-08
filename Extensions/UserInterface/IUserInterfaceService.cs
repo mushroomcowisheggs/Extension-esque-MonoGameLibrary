@@ -1,18 +1,18 @@
+using System;
 using MonoGameLibrary.Core.Time;
-using MonoGameLibrary.Extensions.Input;
 
 namespace MonoGameLibrary.Extensions.UserInterface {
     /// <summary>
-    /// Platform‑agnostic service for managing a user interface tree (rendering and interaction). 
+    /// Service for managing a user interface tree (rendering and interaction). 
     /// </summary>
-    public interface IUserInterfaceService {
+    public interface IUserInterfaceService : IDisposable {
         /// <summary>
         /// Initializes the UI system. Must be called once before any UI operations.
         /// </summary>
         void Initialize();
         
         /// <summary>
-        /// Updates the UI logic (input handling, animations, layout, etc.).
+        /// Updates the UI system each frame. 
         /// </summary>
         /// <param name="timeFrame">Timing information for the current frame.</param>
         void Update(FrameTime timeFrame);
@@ -21,9 +21,9 @@ namespace MonoGameLibrary.Extensions.UserInterface {
         /// Draws the entire UI tree.
         /// </summary>
         void Draw();
-
+        
         /// <summary>
-        /// Removes all UI elements from the root container.
+        /// Removes all UI elements from the root container. 
         /// </summary>
         void ClearRoot();
         
@@ -40,12 +40,12 @@ namespace MonoGameLibrary.Extensions.UserInterface {
         /// <param name="height">Canvas height in pixels.</param>
         /// <param name="zoom">Zoom multiplier.</param>
         void SetCanvas(float width, float height, float zoom);
-
+        
         /// <summary>
         /// Enables or disables keyboard and/or gamepad input for UI navigation.
         /// </summary>
-        /// <param name="flagEnableKeyboard">Whether keyboard input should be enabled. Default true.</param>
-        /// <param name="flagEnableGamepad">Whether gamepad input should be enabled. Default true.</param>
+        /// <param name="flagEnableKeyboard">Whether keyboard input should be enabled. Default true. </param>
+        /// <param name="flagEnableGamepad">Whether gamepad input should be enabled. Default true. </param>
         void ConfigureInput(bool flagEnableKeyboard = true, bool flagEnableGamepad = true);
     }
 }

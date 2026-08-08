@@ -54,7 +54,7 @@ namespace MonoGameLibrary.Extensions.UserInterface {
         }
         
         /// <inheritdoc />
-        public void Draw(FrameTime timeFrame, IRenderContext contextRender) {
+        public void Draw(FrameTime timeFrame) {
             if (!_flagVisible || _flagDisposed) {
                 return;
             }

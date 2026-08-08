@@ -4,10 +4,6 @@ using MonoGameLibrary.Core.Concurrency;
 using MonoGameLibrary.Core.Diagnostics;
 using MonoGameLibrary.Core.Hosting;
 using MonoGameLibrary.Core.Pooling;
-using MonoGameLibrary.Extensions.Audio;
-using MonoGameLibrary.Extensions.Input;
-using MonoGameLibrary.Extensions.Scenes;
-using MonoGameLibrary.Extensions.Screens;
 
 namespace MonoGameLibrary.Extensions {
     /// <summary>
@@ -24,7 +20,7 @@ namespace MonoGameLibrary.Extensions {
         /// <param name="serviceCancellation">Optional cancellation service. If null, <see cref="DefaultCancellationService"/> is used. </param>
         /// <param name="progressLoading">Optional loading progress service. If null, <see cref="DefaultLoadingProgress"/> is used. </param>
         /// <param name="factoryObjectPool">Optional object pool factory. If null, <see cref="DefaultObjectPoolFactory"/> is used. </param>
-        /// <returns>The game builder instance for chaining.</returns>
+        /// <returns>The game builder instance. </returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="builder"/> is null.</exception>
         public static GameBuilder UseDefaultServices(
             this GameBuilder builder,
@@ -48,94 +44,6 @@ namespace MonoGameLibrary.Extensions {
             builder.RegisterService<ICancellationService>(serviceResolvedCancellation, flagOverwrite: false);
             builder.RegisterService<ILoadingProgress>(progressResolvedLoading, flagOverwrite: false);
             builder.RegisterService<IObjectPoolFactory>(factoryResolvedObjectPool, flagOverwrite: false);
-            return builder;
-        }
-        
-        /// <summary>
-        /// Registers the scene manager module. 
-        /// </summary>
-        /// <param name="builder">The game builder instance. </param>
-        /// <param name="serviceContent">The content service used by scenes. If null, the builder will try to resolve one from its registered services. </param>
-        /// <param name="factoryContent">Optional content service factory for automatic scene content creation. 
-        /// <param name="logger">Optional logger for the module. If null, <see cref="NullLogger"/> is used. </param>
-        /// <param name="profiler">An optional profiler for performance measurements. </param>
-        /// If provided, the scene service will support factory-based scene switching. </param>
-        /// <returns>The game builder instance for chaining. </returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="builder"/> is null. </exception>
-        /// <exception cref="InvalidOperationException">Thrown if no <see cref="IContentService"/> can be resolved. </exception>
-        public static GameBuilder UseScenes(
-                this GameBuilder builder, 
-                Optional<IContentService> serviceContent = default, 
-                Optional<IContentServiceFactory> factoryContent = default, 
-                Optional<ILogger> logger = default, 
-                Optional<IProfiler> profiler = default
-            ) {
-            if (builder == null) {
-                throw new System.ArgumentNullException(nameof(builder));
-            }
-            
-            IContentService serviceResolvedContent;
-            if (serviceContent.HasValue) {
-                serviceResolvedContent = serviceContent.Value;
-                builder.RegisterService<IContentService>(serviceResolvedContent);
-            } else if (!builder.TryGetService<IContentService>(out serviceResolvedContent)) {
-                throw new System.InvalidOperationException("No IContentService is registered. Register one before calling UseScenes.");
-            }
-            
-            ILogger loggerToUse;
-            if (logger.HasValue) {
-                loggerToUse = logger.Value;
-            } else {
-                loggerToUse = NullLogger.Instance;
-            }
-            
-            SceneService serviceScene;
-            if (factoryContent.HasValue) {
-                serviceScene = new SceneService(
-                    serviceResolvedContent,
-                    factoryContent,
-                    new Optional<ILogger>(loggerToUse),
-                    profiler
-                );
-            } else {
-                serviceScene = new SceneService(
-                    serviceResolvedContent,
-                    new Optional<ILogger>(loggerToUse),
-                    profiler
-                );
-            }
-            
-            builder.RegisterService<ISceneService>(serviceScene);
-            builder.AddModule(new SceneModule(serviceScene));
-            return builder;
-        }
-        
-        /// <summary>
-        /// Registers the screen service and its host module.
-        /// </summary>
-        /// <param name="builder">The game builder.</param>
-        /// <param name="order">Execution order for the module (default 0).</param>
-        /// <returns>The builder for chaining.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if builder is null.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if IInputService is not registered.</exception>
-        public static GameBuilder UseScreens(this GameBuilder builder, int order = 0) {
-            if (builder == null) {
-                throw new ArgumentNullException(nameof(builder));
-            }
-            
-            if (!builder.TryGetService<IInputService>(out var serviceInput)) {
-                throw new InvalidOperationException(
-                    "IInputService must be registered before calling UseScreens. " +
-                    "Use builder.UseInput() or register manually."
-                );
-            }
-            
-            var service = new ScreenService();
-            builder.RegisterService<IScreenService>(service);
-            
-            var module = new ScreenModule(service, serviceInput, order);
-            builder.AddModule(module);
-            
             return builder;
         }
     }

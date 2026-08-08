@@ -1,19 +1,19 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGameLibrary.Core.Content;
 using MonoGameLibrary.Core.Hosting;
 using MonoGameLibrary.Core.Time;
-using MonoGameLibrary.Extensions.Rendering;
+using MonoGameLibrary.Extensions.Graphics;
 
 namespace MonoGameLibrary.Adapters.MonoGame.Lifecycle {
     /// <summary>
     /// Internal Game subclass that bridges MonoGame's Game loop to
     /// MonoGameLibrary's IGameHost lifecycle.
     /// </summary>
-    internal sealed class MonoGameIntegrationGame : Game {
+    internal sealed class IntegrationGame : Game {
         private readonly IGameHost _host;
         private GraphicsDeviceManager _graphics;
-        private IRenderContext _contextRender;
         private bool _flagIsInitialized;
         
         /// <summary>
@@ -21,7 +21,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Lifecycle {
         /// </summary>
         /// <param name="host">The game host to drive.</param>
         /// <exception cref="ArgumentNullException">Thrown if host is null.</exception>
-        public MonoGameIntegrationGame(IGameHost host) {
+        public IntegrationGame(IGameHost host) {
             if (host == null) {
                 throw new ArgumentNullException(nameof(host));
             }
@@ -37,14 +37,6 @@ namespace MonoGameLibrary.Adapters.MonoGame.Lifecycle {
         
         protected override void LoadContent() {
             base.LoadContent();
-            
-            // Retrieve IRenderContext from host's service registry (must be registered by user)
-            if (!_host.Services.TryGet(out IRenderContext context)) {
-                throw new InvalidOperationException(
-                    "IRenderContext must be registered via GameBuilder.RegisterService before building the host."
-                );
-            }
-            _contextRender = context;
             
             // Retrieve IContentService from host's service registry (must be registered by user)
             if (!_host.Services.TryGet(out IContentService serviceContent)) {
@@ -71,20 +63,17 @@ namespace MonoGameLibrary.Adapters.MonoGame.Lifecycle {
         protected override void Draw(GameTime timeGame) {
             base.Draw(timeGame);
             
-            if (!_flagIsInitialized || _contextRender == null) {
+            if (!_flagIsInitialized) {
                 return;
             }
             
-            FrameTime timeFrame = FrameTime.FromGameTime(timeGame);
-            _host.Draw(timeFrame, _contextRender);
+            FrameTime timeFrame = new FrameTime(timeGame.TotalGameTime, timeGame.ElapsedGameTime);
+            _host.Draw(timeFrame);
         }
         
         protected override void Dispose(bool flagDisposing) {
             if (flagDisposing) {
                 _host.Dispose();
-                if (_contextRender != null) {
-                    _contextRender.Dispose();
-                }
             }
             
             base.Dispose(flagDisposing);

@@ -1,6 +1,6 @@
 using System;
 
-namespace MonoGameLibrary.Extensions.Primitives {
+namespace MonoGameLibrary.Core.Primitives {
     /// <summary>
     /// A simple integer point (X, Y) that is immutable and equatable. 
     /// </summary>

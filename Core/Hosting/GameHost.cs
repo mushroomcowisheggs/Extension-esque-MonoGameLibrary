@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using MonoGameLibrary.Core;
+using MonoGameLibrary.Core.Content;
 using MonoGameLibrary.Core.Lifecycle;
 using MonoGameLibrary.Core.Time;
 
@@ -232,10 +233,7 @@ namespace MonoGameLibrary.Core.Hosting {
         }
         
         /// <inheritdoc />
-        public void Draw(FrameTime timeFrame, IRenderContext contextRender) {
-            if (contextRender == null) {
-                throw new ArgumentNullException(nameof(contextRender));
-            }
+        public void Draw(FrameTime timeFrame) {
             EnterOperation();
             try {
                 List<IDrawable> listToIterate;
@@ -269,8 +267,8 @@ namespace MonoGameLibrary.Core.Hosting {
                     listToIterate = _cachedDrawablesSorted;
                 }
                 foreach (IDrawable module in listToIterate) {
-                    if (!module.Visible) continue;
-                    SafeExecute("Draw", module, delegate { module.Draw(timeFrame, contextRender); });
+                    if (!module.Visible) { continue; }
+                    SafeExecute("Draw", module, delegate { module.Draw(timeFrame); });
                 }
             } finally {
                 ExitOperation();

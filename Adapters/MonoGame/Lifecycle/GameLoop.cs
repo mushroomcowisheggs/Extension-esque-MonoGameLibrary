@@ -1,11 +1,13 @@
+using System;
 using Microsoft.Xna.Framework;
+using MonoGameLibrary.Core.Lifecycle;
 
 namespace MonoGameLibrary.Adapters.MonoGame.Lifecycle {
     /// <summary>
     /// Adapts MonoGame's internal game loop to the IGameLoop interface.
     /// Creates the window, GraphicsDevice, and runs the update/draw cycle.
     /// </summary>
-    public class MonoGameGameLoop : IGameLoop {
+    public class GameLoop : IGameLoop {
         private readonly Game _game;
         private bool _flagDisposed;
         
@@ -14,7 +16,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Lifecycle {
         /// </summary>
         /// <param name="game">The MonoGame Game instance (typically created by the adapter).</param>
         /// <exception cref="ArgumentNullException">Thrown if game is null.</exception>
-        public MonoGameGameLoop(Game game) {
+        public GameLoop(Game game) {
             if (game == null) {
                 throw new ArgumentNullException(nameof(game));
             }

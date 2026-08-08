@@ -1,4 +1,5 @@
 using System;
+using MonoGameLibrary.Core.Content;
 
 namespace MonoGameLibrary.Core.Hosting {
     /// <summary>

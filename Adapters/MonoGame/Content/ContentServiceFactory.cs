@@ -1,14 +1,15 @@
 using System;
 using Microsoft.Xna.Framework.Content;
+using MonoGameLibrary.Core.Content;
 using MonoGameLibrary.Core.Hosting;
 
-namespace MonoGameLibrary.Adapters.MonoGame {
+namespace MonoGameLibrary.Adapters.MonoGame.Content {
     /// <summary>
     /// MonoGame implementation of <see cref="IContentServiceFactory"/>. 
-    /// Each call to <see cref="Create"/> returns a new <see cref="MonoGameContentService"/> 
+    /// Each call to <see cref="Create"/> returns a new <see cref="ContentService"/> 
     /// backed by a fresh <see cref="ContentManager"/>. 
     /// </summary>
-    public sealed class MonoGameContentServiceFactory : IContentServiceFactory {
+    public sealed class ContentServiceFactory : IContentServiceFactory {
         private readonly IServiceProvider _providerService;
         private readonly string _directoryRoot;
 
@@ -19,7 +20,7 @@ namespace MonoGameLibrary.Adapters.MonoGame {
         /// <param name="rootDirectory">The root directory for content (e.g., "Content"). </param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="serviceProvider"/> is null. </exception>
         /// <exception cref="ArgumentException">Thrown if <paramref name="rootDirectory"/> is null or whitespace. </exception>
-        public MonoGameContentServiceFactory(IServiceProvider providerService, string directoryRoot) {
+        public ContentServiceFactory(IServiceProvider providerService, string directoryRoot) {
             if (providerService == null) {
                 throw new ArgumentNullException(nameof(providerService));
             }
@@ -36,7 +37,7 @@ namespace MonoGameLibrary.Adapters.MonoGame {
             var managerContent = new ContentManager(_providerService) {
                 RootDirectory = _directoryRoot
             };
-            return new MonoGameContentService(managerContent);
+            return new ContentService(managerContent);
         }
     }
 }

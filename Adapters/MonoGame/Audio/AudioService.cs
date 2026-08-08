@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
+using MonoGameLibrary.Core;
+using MonoGameLibrary.Core.Diagnostics;
 using MonoGameLibrary.Core.Hosting;
 using MonoGameLibrary.Core.Time;
 using MonoGameLibrary.Extensions.Audio;
@@ -9,12 +11,11 @@ using MonoGameLibrary.Extensions.Audio;
 namespace MonoGameLibrary.Adapters.MonoGame.Audio {
     /// <summary>
     /// MonoGame implementation of <see cref="IAudioService"/>. 
+    /// Manages playback of <see cref="ClipAudio"/> and <see cref="TrackAudio"/>. 
     /// </summary>
     public sealed class AudioService : IAudioService, IDisposable {
         private readonly object _lock = new object();
-        private readonly IContentService _serviceContent;
-        private readonly Dictionary<string, IAudioClip> _dictionaryClipCache;
-        private readonly List<SoundEffectInstance> _listActiveSoundEffectInstances = new List<SoundEffectInstance>();
+        private readonly List<SoundEffectInstance> _listActiveSoundEffectInstances;
         private float _volumePreviousSong;
         private float _volumePreviousSoundEffect;
         private bool _flagDisposed;
@@ -66,13 +67,8 @@ namespace MonoGameLibrary.Adapters.MonoGame.Audio {
         /// <summary>
         /// Initializes a new instance of the <see cref="AudioService"/> class. 
         /// </summary>
-        /// <param name="serviceContent">
-        /// Optional content service for loading clips by asset name. 
-        /// If <c>null</c>, string-based loading methods will throw <see cref="NotSupportedException"/>. 
-        /// </param>
-        public AudioService(IContentService serviceContent = null) {
-            _serviceContent = serviceContent;
-            _dictionaryClipCache = new Dictionary<string, IAudioClip>();
+        public AudioService(
+        ) {
             _listActiveSoundEffectInstances = new List<SoundEffectInstance>();
         }
         
@@ -94,17 +90,17 @@ namespace MonoGameLibrary.Adapters.MonoGame.Audio {
         }
         
         /// <inheritdoc />
-        public void PlayAudioClip(IAudioClip clip, float volume = 1f, float pitch = 0f, float pan = 0f, bool flagLoop = false) {
-            if (clip == null) {
-                throw new ArgumentNullException(nameof(clip));
+        public void PlayClipAudio(IClipAudio audioClip, float volume = 1f, float pitch = 0f, float pan = 0f, bool flagLoop = false) {
+            if (audioClip == null) {
+                throw new ArgumentNullException(nameof(audioClip));
             }
             
-            MonoGameAudioClip monoClip = clip as MonoGameAudioClip;
-            if (monoClip == null) {
-                throw new ArgumentException("Clip must be a MonoGameAudioClip.", nameof(clip));
+            ClipAudio audioMonoGameClip = audioClip as ClipAudio;
+            if (audioMonoGameClip == null) {
+                throw new ArgumentException("Clip must be a ClipAudio.", nameof(audioClip));
             }
             
-            SoundEffectInstance instance = monoClip.SoundEffect.CreateInstance();
+            SoundEffectInstance instance = audioMonoGameClip.SoundEffect.CreateInstance();
             instance.Volume = Math.Clamp(volume, 0f, 1f);
             instance.Pitch = Math.Clamp(pitch, -1f, 1f);
             instance.Pan = Math.Clamp(pan, -1f, 1f);
@@ -117,54 +113,19 @@ namespace MonoGameLibrary.Adapters.MonoGame.Audio {
         }
         
         /// <inheritdoc />
-        public void PlayAudioClip(string nameAsset, float volume = 1f, float pitch = 0f, float pan = 0f, bool flagShouldLoop = false) {
-            if (string.IsNullOrWhiteSpace(nameAsset)) {
-                throw new ArgumentException("Asset name cannot be empty.", nameof(nameAsset));
+        public void PlayTrackAudio(ITrackAudio audioTrack, bool flagRepeat = true) {
+            if (audioTrack == null) {
+                throw new ArgumentNullException(nameof(audioTrack));
             }
 
-            IAudioClip clip = LoadClip(nameAsset);
-            PlayAudioClip(clip, volume, pitch, pan, flagShouldLoop);
-        }
-        
-        /// <inheritdoc />
-        public void PlayAudioTrack(IAudioTrack track, bool flagRepeat = true) {
-            if (track == null) {
-                throw new ArgumentNullException(nameof(track));
-            }
-
-            MonoGameAudioTrack trackMonoGameAudio = track as MonoGameAudioTrack;
+            TrackAudio trackMonoGameAudio = audioTrack as TrackAudio;
             if (trackMonoGameAudio == null) {
-                throw new ArgumentException("Track must be a MonoGameAudioTrack.", nameof(track));
+                throw new ArgumentException("Track must be a TrackAudio.", nameof(audioTrack));
             }
 
             MediaPlayer.Stop();
             MediaPlayer.Play(trackMonoGameAudio.Song);
             MediaPlayer.IsRepeating = flagRepeat;
-        }
-        
-        /// <inheritdoc />
-        public IAudioClip LoadClip(string nameAsset) {
-            if (string.IsNullOrWhiteSpace(nameAsset)) {
-                throw new ArgumentException("Asset name cannot be empty.", nameof(nameAsset));
-            }
-            
-            if (_serviceContent == null) {
-                throw new NotSupportedException(
-                    "This AudioService instance was not configured with an IContentService. " +
-                    "Use the constructor that accepts IContentService to enable string-based loading."
-                );
-            }
-            
-            lock (_lock) {
-                if (_dictionaryClipCache.TryGetValue(nameAsset, out var cached)) {
-                    return cached;
-                }
-                
-                SoundEffect effect = _serviceContent.Load<SoundEffect>(nameAsset);
-                var clip = new MonoGameAudioClip(effect);
-                _dictionaryClipCache[nameAsset] = clip;
-                return clip;
-            }
         }
         
         /// <inheritdoc />
@@ -189,20 +150,12 @@ namespace MonoGameLibrary.Adapters.MonoGame.Audio {
                 return;
             }
             lock (_lock) {
-                foreach (var clip in _dictionaryClipCache.Values) {
-                    if (clip is MonoGameAudioClip monoClip) {
-                        if (monoClip.SoundEffect != null) {
-                            monoClip.SoundEffect.Dispose();
-                        }
-                    }
-                }
                 foreach (var instance in _listActiveSoundEffectInstances) {
                     instance.Dispose();
                 }
                 _listActiveSoundEffectInstances.Clear();
-                _dictionaryClipCache.Clear();
+                _flagDisposed = true;
             }
-            _flagDisposed = true;
             GC.SuppressFinalize(this);
         }
     }

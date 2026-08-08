@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGameLibrary.Core.Content;
 using MonoGameLibrary.Core.Hosting;
+using MonoGameLibrary.Core.Primitives;
 using MonoGameLibrary.Adapters.MonoGame;
+using MonoGameLibrary.Extensions.Graphics;
 
 namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
     /// <summary>
@@ -28,7 +32,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
         private readonly int _widthTile;
         private readonly int _heightTile;
         private bool _flagDisposed;
-
+        
         /// <summary>Gets the number of columns.</summary>
         public int Columns { get { return _columns; } }
         /// <summary>Gets the number of rows.</summary>
@@ -49,21 +53,21 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
         public float ScaledTileHeight { get { return TileHeight * Scale.Y; } }
         /// <summary>Gets the number of layers (only first is populated).</summary>
         public int LayerCount { get { return _layers.Count; } }
-
+        
         /// <summary>Gets or sets the draw scale.</summary>
         public Vector2 Scale { get; set; } = Vector2.One;
         /// <summary>Gets or sets the color tint.</summary>
-        public Color TintColor { get; set; } = Color.White;
+        public Microsoft.Xna.Framework.Color TintColor { get; set; } = Microsoft.Xna.Framework.Color.White;
         /// <summary>Gets or sets a drawing offset for scrolling.</summary>
         public Vector2 Offset { get; set; } = Vector2.Zero;
-
+        
         private Tilemap(TextureAtlas atlas, int columns, int rows, int widthTile, int heightTile) {
             if (atlas == null) { throw new ArgumentNullException(nameof(atlas)); }
             if (columns <= 0) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows <= 0) { throw new ArgumentOutOfRangeException(nameof(rows)); }
             if (widthTile <= 0) { throw new ArgumentOutOfRangeException(nameof(widthTile)); }
             if (heightTile <= 0) { throw new ArgumentOutOfRangeException(nameof(heightTile)); }
-
+            
             _atlas = atlas;
             _columns = columns;
             _rows = rows;
@@ -71,7 +75,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             _heightTile = heightTile;
             _layers = new List<int[,]>();
         }
-
+        
         /// <summary>
         /// Creates a tilemap from an XML stream.
         /// </summary>
@@ -83,10 +87,10 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
         public static Tilemap FromStream(IContentService serviceContent, Stream stream) {
             if (serviceContent == null) { throw new ArgumentNullException(nameof(serviceContent)); }
             if (stream == null) { throw new ArgumentNullException(nameof(stream)); }
-
+            
             XmlDocument document = new XmlDocument();
             document.Load(stream);
-
+            
             XmlNode nodeRoot = document.DocumentElement;
             if (nodeRoot == null) {
                 throw new InvalidOperationException("XML document has no root element.");
@@ -96,13 +100,13 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
                     $"Invalid tilemap definition: root element must be 'Tilemap', got '{nodeRoot.Name}'."
                 );
             }
-
+            
             // Parse tileset.
             XmlNode nodeTileset = nodeRoot.SelectSingleNode("Tileset");
             if (nodeTileset == null) {
                 throw new InvalidOperationException("Missing <Tileset> element.");
             }
-
+            
             string nameRegion = GetAttribute(nodeTileset, "region");
             if (string.IsNullOrWhiteSpace(nameRegion)) {
                 throw new InvalidOperationException("Tileset missing 'region' attribute.");
@@ -111,13 +115,15 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             if (parts.Length != 4) {
                 throw new InvalidOperationException("Tileset 'region' must have 4 integer values (x y width height).");
             }
-            if (!int.TryParse(parts[0], out int texX) ||
+            if (
+                !int.TryParse(parts[0], out int texX) ||
                 !int.TryParse(parts[1], out int texY) ||
                 !int.TryParse(parts[2], out int texWidth) ||
-                !int.TryParse(parts[3], out int texHeight)) {
+                !int.TryParse(parts[3], out int texHeight)
+            ) {
                 throw new InvalidOperationException("Tileset 'region' values must be integers.");
             }
-
+            
             string nameTileWidth = GetAttribute(nodeTileset, "widthTile");
             string nameTileHeight = GetAttribute(nodeTileset, "heightTile");
             if (string.IsNullOrWhiteSpace(nameTileWidth) || string.IsNullOrWhiteSpace(nameTileHeight)) {
@@ -126,7 +132,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             if (!int.TryParse(nameTileWidth, out int widthTile) || !int.TryParse(nameTileHeight, out int heightTile)) {
                 throw new InvalidOperationException("widthTile and heightTile must be integers.");
             }
-
+            
             string assetTexture = nodeTileset.InnerText;
             if (assetTexture != null) {
                 assetTexture = assetTexture.Trim();
@@ -134,17 +140,11 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             if (string.IsNullOrWhiteSpace(assetTexture)) {
                 throw new InvalidOperationException("Tileset texture asset path is empty.");
             }
-
-            // Load texture.
-            Texture2D texture = serviceContent.Load<Texture2D>(assetTexture);
-            if (texture == null) {
-                throw new InvalidOperationException($"Failed to load texture asset '{assetTexture}'.");
-            }
-
-            // Create an atlas with only the tileset region.
-            TextureAtlas atlas = new TextureAtlas(texture);
-            // We don't need to add regions yet; we'll compute tile regions on the fly.
-
+            
+            ITwoDimensionalTexture textureAsset = serviceContent.Load<ITwoDimensionalTexture>(assetTexture);
+            TextureAtlas atlas = new TextureAtlas(textureAsset);
+            // We don't need to add regions yet; we'll compute tile regions on the fly. 
+            
             // Determine tile count and precompute tile regions.
             int tilesPerRow = texWidth / widthTile;
             int tilesPerCol = texHeight / heightTile;
@@ -153,17 +153,17 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             for (int i = 0; i < tilesTotal; i += 1) {
                 int tileX = texX + (i % tilesPerRow) * widthTile;
                 int tileY = texY + (i / tilesPerRow) * heightTile;
-                TextureRegion regionTile = new TextureRegion(texture, new Rectangle(tileX, tileY, widthTile, heightTile));
+                TextureRegion regionTile = new TextureRegion(textureAsset, new Microsoft.Xna.Framework.Rectangle(tileX, tileY, widthTile, heightTile));
                 regionsTile[i] = regionTile;
             }
-
+            
             // Store regionsTile in a local variable for drawing.
             // Parse tile data.
             XmlNode nodeTiles = nodeRoot.SelectSingleNode("Tiles");
             if (nodeTiles == null) {
                 throw new InvalidOperationException("Missing <Tiles> element.");
             }
-
+            
             string data = nodeTiles.InnerText;
             if (data != null) {
                 data = data.Trim();
@@ -171,17 +171,17 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             if (string.IsNullOrWhiteSpace(data)) {
                 throw new InvalidOperationException("Tiles data is empty.");
             }
-
+            
             string[] rows = data.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             if (rows.Length == 0) {
                 throw new InvalidOperationException("No rows found in Tiles data.");
             }
-
+            
             int countColumns = rows[0].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length;
             int countRows = rows.Length;
-
+            
             Tilemap tilemap = new Tilemap(atlas, countColumns, countRows, widthTile, heightTile);
-
+            
             // Create a single layer.
             int[,] layer = new int[countRows, countColumns];
             for (int r = 0; r < countRows; r += 1) {
@@ -197,10 +197,10 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
                 }
             }
             tilemap._layers.Add(layer);
-
+            
             // Store tile regions for quick lookup.
             tilemap._tileRegions = regionsTile;
-
+            
             return tilemap;
         }
         
@@ -210,16 +210,16 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             if (attribute == null) { return null; }
             return attribute.Value;
         }
-
+        
         private Dictionary<int, TextureRegion> _tileRegions; // cached for drawing
-
+        
         /// <summary>
         /// Gets the tile index at the specified position (layer 0).
         /// </summary>
         public int GetTileIndex(int column, int row) {
             return GetTileIndex(0, column, row);
         }
-
+        
         /// <summary>
         /// Gets the tile index at the specified position and layer.
         /// </summary>
@@ -228,14 +228,14 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             if (column < 0 || column >= _columns || row < 0 || row >= _rows) { return -1; }
             return _layers[indexLayer][row, column];
         }
-
+        
         /// <summary>
         /// Sets the tile index (layer 0).
         /// </summary>
         public void SetTileIndex(int column, int row, int indexTile) {
             SetTileIndex(0, column, row, indexTile);
         }
-
+        
         /// <summary>
         /// Sets the tile index for a specific layer.
         /// </summary>
@@ -244,62 +244,70 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
             if (column < 0 || column >= _columns || row < 0 || row >= _rows) { return; }
             _layers[indexLayer][row, column] = indexTile;
         }
-
+        
         /// <summary>
         /// Draws all layers.
         /// </summary>
-        /// <param name="batchSprite">The SpriteBatch to draw with.</param>
+        /// <param name="contextRender">The render context to draw with.</param>
         /// <exception cref="ArgumentNullException">Thrown if batchSprite is null.</exception>
-        public void Draw(SpriteBatch batchSprite) {
-            if (batchSprite == null) { throw new ArgumentNullException(nameof(batchSprite)); }
+        public void Draw(IRenderContext contextRender) {
+            if (contextRender == null) { throw new ArgumentNullException(nameof(contextRender)); }
             if (_atlas.Texture == null) { return; }
-
+            
             foreach (int[,] layer in _layers) {
-                DrawLayer(batchSprite, layer);
+                DrawLayer(contextRender, layer);
             }
         }
-
-        private void DrawLayer(SpriteBatch batchSprite, int[,] layer) {
+        
+        private void DrawLayer(IRenderContext contextRender, int[,] layer) {
             for (int row = 0; row < _rows; row += 1) {
-                for (int col = 0; col < _columns; col += 1) {
-                    int indexTile = layer[row, col];
+                for (int column = 0; column < _columns; column += 1) {
+                    int indexTile = layer[row, column];
                     if (indexTile < 0) { continue; }
-
+                    
                     TextureRegion region = GetTileRegion(indexTile);
                     if (region == null) { continue; }
-
+                    
                     Vector2 position = new Vector2(
-                        col * _widthTile * Scale.X + Offset.X,
+                        column * _widthTile * Scale.X + Offset.X,
                         row * _heightTile * Scale.Y + Offset.Y
                     );
-
-                    batchSprite.Draw(
-                        region.Texture,
-                        position,
-                        region.SourceRectangle,
-                        TintColor,
-                        0f,
-                        Vector2.Zero,
-                        Scale,
-                        SpriteEffects.None,
-                        0f
+                    
+                    var color = new Core.Primitives.Color(
+                        TintColor.R, TintColor.G, TintColor.B, TintColor.A
+                    );
+                    
+                    var vectorScale = new TwoDimensionalVector(Scale.X, Scale.Y);
+                    
+                    var rectangleSource = new Core.Primitives.Rectangle(
+                        region.SourceRectangle.X,
+                        region.SourceRectangle.Y,
+                        region.SourceRectangle.Width,
+                        region.SourceRectangle.Height
+                    );
+                    
+                    region.Texture.DrawInto(
+                        contextRender,
+                        new TwoDimensionalVector(position.X, position.Y),
+                        new OptionalValue<Core.Primitives.Rectangle>(rectangleSource), // specify source rectangle
+                        color,
+                        0f, // rotation
+                        TwoDimensionalVector.Zero, // origin
+                        vectorScale,
+                        MonoGameLibrary.Extensions.Graphics.SpriteEffects.None,
+                        0f // layer depth
                     );
                 }
             }
         }
-
+        
         private TextureRegion GetTileRegion(int indexTile) {
-            if (_tileRegions != null && _tileRegions.TryGetValue(indexTile, out TextureRegion region)) {
+            if (_tileRegions.TryGetValue(indexTile, out TextureRegion region)) {
                 return region;
             }
-            // Fallback to atlas lookup.
-            try {
-                return _atlas.GetRegion($"tile_{indexTile}");
-            } catch (KeyNotFoundException) {
-                return null;
-            }
+            return null;
         }
-
+        
         /// <summary>
         /// Disposes the tilemap (does not dispose the atlas, as it may be shared).
         /// </summary>

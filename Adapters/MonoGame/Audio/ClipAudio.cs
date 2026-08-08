@@ -4,11 +4,13 @@ using MonoGameLibrary.Extensions.Audio;
 
 namespace MonoGameLibrary.Adapters.MonoGame.Audio {
     /// <summary>
-    /// Wraps a MonoGame <see cref="SoundEffect"/> as an <see cref="IAudioClip"/>.
+    /// Wraps a MonoGame <see cref="SoundEffect"/> as an <see cref="IClipAudio"/>. 
     /// </summary>
-    public sealed class MonoGameAudioClip : IAudioClip {
-        public SoundEffect SoundEffect { get; }
-
+    internal sealed class ClipAudio : IClipAudio {
+        /// <summary>The underlying MonoGame sound effect. </summary>
+        internal SoundEffect SoundEffect { get; }
+        
+        /// <inheritdoc/>
         public TimeSpan Duration {
             get {
                 if (SoundEffect == null) {
@@ -17,8 +19,9 @@ namespace MonoGameLibrary.Adapters.MonoGame.Audio {
                 return SoundEffect.Duration;
             }
         }
-
-        public MonoGameAudioClip(SoundEffect effectSound) {
+        
+        /// <summary>Creates a new wrapper around a MonoGame sound effect. </summary>
+        public ClipAudio(SoundEffect effectSound) {
             if (effectSound == null) {
                 throw new ArgumentNullException(nameof(effectSound));
             }

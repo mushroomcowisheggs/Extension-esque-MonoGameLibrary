@@ -1,5 +1,5 @@
 // Core/GlobalUsings.cs
-// This file provides global using directives for the core library. 
+// This file provides global using directives for the core library.
 global using MonoGameLibrary.Core.Concurrency;
 global using MonoGameLibrary.Core.Diagnostics;
 global using MonoGameLibrary.Core.Hosting;

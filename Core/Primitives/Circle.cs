@@ -1,7 +1,7 @@
 using System;
 using System.Numerics;
 
-namespace MonoGameLibrary.Extensions.Primitives {
+namespace MonoGameLibrary.Core.Primitives {
     /// <summary>
     /// A simple circle value type defined by center (X,Y) and radius. 
     /// </summary>

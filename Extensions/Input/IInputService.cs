@@ -2,7 +2,7 @@ using MonoGameLibrary.Core.Time;
 
 namespace MonoGameLibrary.Extensions.Input {
     /// <summary>
-    /// Platform‑agnostic service for querying keyboard and gamepad input states.
+    /// Service for querying keyboard and gamepad input states.
     /// </summary>
     public interface IInputService {
         /// <summary>

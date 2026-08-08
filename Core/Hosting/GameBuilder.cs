@@ -9,7 +9,7 @@ namespace MonoGameLibrary.Core.Hosting {
     /// Provides a fluent API for configuring and building an <see cref="IGameHost"/>.
     /// Each instance can only build one host; subsequent calls to <see cref="Build"/> will throw.
     /// </summary>
-    public class GameBuilder : IGameBuilder {
+    public class GameBuilder : IGameBuilder<GameBuilder> {
         private readonly object _lockBuilder = new object();
         private readonly ServiceRegistry _registryService = new ServiceRegistry();
         private readonly HashSet<object> _setModule = new HashSet<object>();
@@ -19,7 +19,7 @@ namespace MonoGameLibrary.Core.Hosting {
         private bool _flagIsBuilt = false;
         
         /// <inheritdoc />
-        public GameBuilder RegisterService<T>(T instance, bool flagOverwrite = false) where T : class {
+        public GameBuilder RegisterService<TService>(TService instance, bool flagOverwrite = false) where TService : class {
             if (instance == null) { throw new ArgumentNullException(nameof(instance)); }
             lock (_lockBuilder) {
                 if (_flagIsBuilt) { throw new InvalidOperationException("Build already called."); }
@@ -29,7 +29,7 @@ namespace MonoGameLibrary.Core.Hosting {
                     _registryService.TryRegister(instance, flagOverwrite: true);
                 } else {
                     if (!_registryService.TryRegister(instance, flagOverwrite: false)) {
-                        throw new InvalidOperationException($"Service of type {typeof(T).FullName} is already registered.");
+                        throw new InvalidOperationException($"Service of type {typeof(TService).FullName} is already registered.");
                     }
                 }
             }
@@ -82,13 +82,13 @@ namespace MonoGameLibrary.Core.Hosting {
         public GameBuilder UseObjectPoolFactory(IObjectPoolFactory factoryPool, bool flagOverwrite = false) { RegisterService(factoryPool, flagOverwrite); return this; }
         
         /// <inheritdoc />
-        public T GetService<T>() where T : class {
-            return _registryService.Get<T>();
+        public TService GetService<TService>() where TService : class {
+            return _registryService.Get<TService>();
         }
         
         /// <inheritdoc />
-        public bool TryGetService<T>(out T instance) where T : class {
-            return _registryService.TryGet<T>(out instance);
+        public bool TryGetService<TService>(out TService instance) where TService : class {
+            return _registryService.TryGet<TService>(out instance);
         }
         
         /// <inheritdoc />

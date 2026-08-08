@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGameLibrary.Extensions.Graphics;
 
 namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
     /// <summary>
@@ -9,7 +10,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
         /// <summary>
         /// Gets or sets the backing texture.
         /// </summary>
-        public Texture2D Texture { get; set; }
+        public ITwoDimensionalTexture Texture { get; set; }
         
         /// <summary>
         /// Gets or sets the source rectangle.
@@ -40,7 +41,7 @@ namespace MonoGameLibrary.Adapters.MonoGame.Graphics {
         /// <summary>
         /// Creates a new texture region with the specified source rectangle.
         /// </summary>
-        public TextureRegion(Texture2D texture, Rectangle rectangleSource) {
+        public TextureRegion(ITwoDimensionalTexture texture, Rectangle rectangleSource) {
             Texture = texture;
             SourceRectangle = rectangleSource;
         }
